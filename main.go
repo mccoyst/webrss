@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"time"
 
 	"github.com/zippoxer/RSS-Go"
@@ -189,10 +190,10 @@ type ListingPage struct {
 
 type Entry struct {
 	FeedName string
-	FeedURL string
-	Title string
-	URL string
-	When time.Time
+	FeedURL  string
+	Title    string
+	URL      string
+	When     time.Time
 }
 
 func filterEntries(feeds []*rss.Feed, begin time.Time) []Entry {
@@ -202,14 +203,17 @@ func filterEntries(feeds []*rss.Feed, begin time.Time) []Entry {
 			if i.When.After(begin) {
 				filtered = append(filtered, Entry{
 					FeedName: f.Title,
-					FeedURL: f.Link,
-					Title: i.Title,
-					URL: i.Link,
-					When: i.When,
+					FeedURL:  f.Link,
+					Title:    i.Title,
+					URL:      i.Link,
+					When:     i.When,
 				})
 			}
 		}
 	}
+	sort.Slice(filtered, func(i, j int) bool {
+		return filtered[i].When.After(filtered[j].When)
+	})
 	return filtered
 }
 
