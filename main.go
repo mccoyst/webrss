@@ -229,14 +229,16 @@ var listPageTemplate = `<!DOCTYPE html>
 
 <body>
 {{if .}}
+	<ul>
 {{range .}}
-	<div>
+	<li>
 		<h1><a href="{{.URL}}">{{.Title}}</a></h1>
-		<p class="details"><a href="{{.FeedURL}}">{{.FeedName}}</a> ({{.When.Format "Mon 02/01/2006 15:04:05"}})</p>
-	</div>
+		<p class="details">{{.When.Format "Mon 02/01/2006"}}, <a href="{{.FeedURL}}">{{.FeedName}}</a></p>
+	</li>
 {{end}}
+	</ul>
 {{else}}
-	<p>Nothing to see, yet.</p>
+	<p>Nothing to see, yet. ⏳</p>
 {{end}}
 </body>
 </html>
