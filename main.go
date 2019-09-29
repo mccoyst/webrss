@@ -76,7 +76,8 @@ func main() {
 
 func listFeeds(w io.Writer, since time.Time, fc <-chan []*rss.Feed) {
 	feeds := <-fc
-	listPage.Execute(w, &ListingPage{feeds, since})
+	entries := filterEntries(feeds, since)
+	listPage.Execute(w, entries)
 }
 
 func feedCache(toSave <-chan []*rss.Feed, toShow chan<- []*rss.Feed) {
@@ -182,15 +183,31 @@ func maybeDie(err error) {
 }
 
 type ListingPage struct {
-	Feeds []*rss.Feed
+	Feeds []Entry
 	Begin time.Time
 }
 
-func (lp *ListingPage) FilteredItems(items []*rss.Item) []*rss.Item {
-	var filtered []*rss.Item
-	for _, i := range items {
-		if i.When.After(lp.Begin) {
-			filtered = append(filtered, i)
+type Entry struct {
+	FeedName string
+	FeedURL string
+	Title string
+	URL string
+	When time.Time
+}
+
+func filterEntries(feeds []*rss.Feed, begin time.Time) []Entry {
+	var filtered []Entry
+	for _, f := range feeds {
+		for _, i := range f.Items {
+			if i.When.After(begin) {
+				filtered = append(filtered, Entry{
+					FeedName: f.Title,
+					FeedURL: f.Link,
+					Title: i.Title,
+					URL: i.Link,
+					When: i.When,
+				})
+			}
 		}
 	}
 	return filtered
@@ -208,13 +225,15 @@ var listPageTemplate = `<!DOCTYPE html>
 </head>
 
 <body>
-{{range .Feeds}}
-	{{if $items := ($.FilteredItems .Items)}}
-	<h2><a href="{{.Link}}">{{.Title}}</a></h2>
-	<ul>
-		{{range $items}}<li><a href="{{.Link}}">{{.Title}}</a></li>{{end}}
-	</ul>
-	{{end}}
+{{if .}}
+{{range .}}
+	<div>
+		<h1><a href="{{.URL}}">{{.Title}}</a></h1>
+		<p class="details"><a href="{{.FeedURL}}">{{.FeedName}}</a> ({{.When.Format "Mon 02/01/2006 15:04:05"}})</p>
+	</div>
+{{end}}
+{{else}}
+	<p>Nothing to see, yet.</p>
 {{end}}
 </body>
 </html>
