@@ -236,7 +236,7 @@ func tryParse(r io.Reader) ([]Entry, error) {
 }
 
 func parseRssTimes(ts string) (time.Time, error) {
-	fmts := []string{time.RFC822,time.RFC822Z,time.RFC1123,time.RFC1123Z}
+	fmts := []string{time.RFC822, time.RFC822Z, time.RFC1123, time.RFC1123Z}
 	var t time.Time
 	var err error
 	for _, f := range fmts {
