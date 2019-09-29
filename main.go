@@ -5,6 +5,7 @@ package main
 import (
 	"bufio"
 	"encoding/gob"
+	"encoding/xml"
 	"errors"
 	"flag"
 	"html/template"
@@ -15,8 +16,6 @@ import (
 	"os"
 	"sort"
 	"time"
-
-	"github.com/zippoxer/RSS-Go"
 )
 
 var feeds = flag.String("feeds", "", "file containing a list of feeds")
@@ -50,8 +49,8 @@ func main() {
 		maybeDie(in.Err())
 	}
 
-	toSave := make(chan []*rss.Feed)
-	toShow := make(chan []*rss.Feed)
+	toSave := make(chan []Entry)
+	toShow := make(chan []Entry)
 	go feedCache(toSave, toShow)
 	go fetchFeeds(toSave, urls)
 
@@ -75,14 +74,14 @@ func main() {
 	http.ListenAndServe(":http", nil)
 }
 
-func listFeeds(w io.Writer, since time.Time, fc <-chan []*rss.Feed) {
+func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
 	feeds := <-fc
 	entries := filterEntries(feeds, since)
 	listPage.Execute(w, entries)
 }
 
-func feedCache(toSave <-chan []*rss.Feed, toShow chan<- []*rss.Feed) {
-	var feedz []*rss.Feed
+func feedCache(toSave <-chan []Entry, toShow chan<- []Entry) {
+	var feedz []Entry
 	for {
 		select {
 		case toShow <- feedz:
@@ -93,7 +92,7 @@ func feedCache(toSave <-chan []*rss.Feed, toShow chan<- []*rss.Feed) {
 	}
 }
 
-func saveFeeds(feeds []*rss.Feed) {
+func saveFeeds(feeds []Entry) {
 	f, err := os.Create(*cache)
 	maybeDie(err)
 	defer f.Close()
@@ -102,12 +101,12 @@ func saveFeeds(feeds []*rss.Feed) {
 	enc.Encode(feeds)
 }
 
-func fetchFeeds(db chan<- []*rss.Feed, urls []string) {
+func fetchFeeds(db chan<- []Entry, urls []string) {
 	f, err := os.Open(*cache)
 	if err != nil {
 		fetch(db, urls)
 	} else {
-		var feeds []*rss.Feed
+		var feeds []Entry
 		dec := gob.NewDecoder(f)
 		err := dec.Decode(&feeds)
 		f.Close()
@@ -121,11 +120,11 @@ func fetchFeeds(db chan<- []*rss.Feed, urls []string) {
 	}
 }
 
-func fetch(db chan<- []*rss.Feed, urls []string) {
+func fetch(db chan<- []Entry, urls []string) {
 	n := 0
-	feeds := []*rss.Feed{}
+	var feeds []Entry
 	errs := []error{}
-	fc := make(chan *rss.Feed)
+	fc := make(chan []Entry)
 	ec := make(chan error)
 
 	for _, u := range urls {
@@ -140,7 +139,7 @@ func fetch(db chan<- []*rss.Feed, urls []string) {
 	for i := 0; i < n; i++ {
 		select {
 		case f := <-fc:
-			feeds = append(feeds, f)
+			feeds = append(feeds, f...)
 		case e := <-ec:
 			errs = append(errs, e)
 		}
@@ -153,7 +152,7 @@ func fetch(db chan<- []*rss.Feed, urls []string) {
 	}
 }
 
-func getFeed(s string, fc chan *rss.Feed, ec chan error) {
+func getFeed(s string, fc chan []Entry, ec chan error) {
 	url, err := url.Parse(s)
 	if err != nil {
 		ec <- errors.New(s + ": " + err.Error())
@@ -167,13 +166,12 @@ func getFeed(s string, fc chan *rss.Feed, ec chan error) {
 	}
 	defer resp.Body.Close()
 
-	feed, err := rss.Get(resp.Body)
+	entries, err := tryParse(resp.Body)
 	if err != nil {
 		ec <- errors.New(s + ": " + err.Error())
 		return
 	}
-
-	fc <- feed
+	fc <- entries
 }
 
 func maybeDie(err error) {
@@ -181,6 +179,101 @@ func maybeDie(err error) {
 		os.Stderr.WriteString(err.Error() + "\n")
 		os.Exit(1)
 	}
+}
+
+type Feed struct {
+	atom *Atom1
+	rss  *Rss2
+}
+
+func (f *Feed) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	if start.Name.Local == "rss" {
+
+		return d.DecodeElement(&f.rss, &start)
+	}
+	return d.DecodeElement(&f.atom, &start)
+}
+
+func tryParse(r io.Reader) ([]Entry, error) {
+	var feed Feed
+	d := xml.NewDecoder(r)
+	err := d.Decode(&feed)
+	if err != nil {
+		return nil, err
+	}
+	var entries []Entry
+
+	if feed.atom != nil {
+		for _, i := range feed.atom.Items {
+			when, err := time.Parse(time.RFC3339, i.When)
+			if err != nil {
+				log.Printf("Time parse error for %q: atom gives %v\n", i.Title, err)
+			}
+			entries = append(entries, Entry{
+				FeedName: feed.atom.Title,
+				FeedURL:  feed.atom.Link.URL,
+				Title:    i.Title,
+				URL:      i.Link.URL,
+				When:     when,
+			})
+		}
+	} else {
+		for _, i := range feed.rss.Channel.Items {
+			when, err := parseRssTimes(i.When)
+			if err != nil {
+				log.Printf("Time parse error for %q: rss gives %v\n", i.Title, err)
+			}
+			entries = append(entries, Entry{
+				FeedName: feed.rss.Channel.Title,
+				FeedURL:  feed.rss.Channel.Link,
+				Title:    i.Title,
+				URL:      i.Link,
+				When:     when,
+			})
+		}
+	}
+	return entries, nil
+}
+
+func parseRssTimes(ts string) (time.Time, error) {
+	fmts := []string{time.RFC822,time.RFC822Z,time.RFC1123,time.RFC1123Z}
+	var t time.Time
+	var err error
+	for _, f := range fmts {
+		t, err = time.Parse(f, ts)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return t, err
+}
+
+type Atom1 struct {
+	Title string `xml:"title"`
+	Link  struct {
+		URL string `xml:"href,attr"`
+	} `xml:"link"`
+
+	Items []struct {
+		Title string `xml:"title"`
+		Link  struct {
+			URL string `xml:"href,attr"`
+		} `xml:"link"`
+		When string `xml:"updated"`
+	} `xml:"entry"`
+}
+
+type Rss2 struct {
+	Channel struct {
+		Title string `xml:"title"`
+		Link  string `xml:"link"`
+
+		Items []struct {
+			Title string `xml:"title"`
+			Link  string `xml:"link"`
+			When  string `xml:"pubDate"`
+		} `xml:"item"`
+	} `xml:"channel"`
 }
 
 type ListingPage struct {
@@ -196,19 +289,11 @@ type Entry struct {
 	When     time.Time
 }
 
-func filterEntries(feeds []*rss.Feed, begin time.Time) []Entry {
+func filterEntries(feeds []Entry, begin time.Time) []Entry {
 	var filtered []Entry
-	for _, f := range feeds {
-		for _, i := range f.Items {
-			if i.When.After(begin) {
-				filtered = append(filtered, Entry{
-					FeedName: f.Title,
-					FeedURL:  f.Link,
-					Title:    i.Title,
-					URL:      i.Link,
-					When:     i.When,
-				})
-			}
+	for _, i := range feeds {
+		if i.When.After(begin) {
+			filtered = append(filtered, i)
 		}
 	}
 	sort.Slice(filtered, func(i, j int) bool {
