@@ -324,7 +324,7 @@ var listPageTemplate = `<!DOCTYPE html>
 {{range .}}
 	<li>
 		<h1><a href="{{.URL}}">{{.Title}}</a></h1>
-		<p class="details">{{.When.Format "Mon 02/01/2006"}}, <a href="{{.FeedURL}}">{{.FeedName}}</a></p>
+		<p class="details"><time datetime="{{.When.Format "2006-01-02"}}">{{.When.Format "Mon 02/01/2006"}}</time>, <a href="{{.FeedURL}}">{{.FeedName}}</a></p>
 	</li>
 {{end}}
 	</ul>
