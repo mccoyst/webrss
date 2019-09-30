@@ -22,7 +22,7 @@ var feeds = flag.String("feeds", "", "file containing a list of feeds")
 var cert = flag.String("cert", "", "Certificate file")
 var key = flag.String("key", "", "Private key for certificate")
 var cache = flag.String("cache", "rss.gob", "File for storing feed results")
-var freq = flag.Duration("freq", 4*time.Hour, "Duration between feed polls")
+var freq = flag.Duration("freq", 1*time.Hour, "Duration between feed polls")
 
 func main() {
 	flag.Parse()
