@@ -121,7 +121,7 @@ func fetchFeeds(db chan<- []Entry, urls []string) {
 }
 
 func fetch(db chan<- []Entry, urls []string) {
-	log.Printf("It's time to fetch %d feeds.\n", len(urls))
+	log.Printf("It's time to fetch %d feeds.", len(urls))
 	n := 0
 	var feeds []Entry
 	errs := []error{}
