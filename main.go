@@ -121,6 +121,7 @@ func fetchFeeds(db chan<- []Entry, urls []string) {
 }
 
 func fetch(db chan<- []Entry, urls []string) {
+	log.Printf("It's time to fetch %d feeds.\n", len(urls))
 	n := 0
 	var feeds []Entry
 	errs := []error{}
@@ -150,6 +151,7 @@ func fetch(db chan<- []Entry, urls []string) {
 	for _, e := range errs {
 		log.Printf("Problem: %v\n", e)
 	}
+	log.Println("Done fetching.")
 }
 
 func getFeed(s string, fc chan []Entry, ec chan error) {
