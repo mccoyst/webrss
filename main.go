@@ -314,7 +314,7 @@ var listPageTemplate = `<!DOCTYPE html>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="icon" href="style/favicon.png">
-	<link rel="stylesheet" href="style/stk5.css">
+	<link rel="stylesheet" href="style/feed.css">
 
 	<title>WEBRSS</title>
 </head>
