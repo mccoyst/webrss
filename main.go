@@ -23,6 +23,7 @@ var cert = flag.String("cert", "", "Certificate file")
 var key = flag.String("key", "", "Private key for certificate")
 var cache = flag.String("cache", "rss.gob", "File for storing feed results")
 var freq = flag.Duration("freq", 1*time.Hour, "Duration between feed polls")
+var httpAddr = flag.String("http", ":http", "HTTP listen address (in typical Dial fashion)")
 
 func main() {
 	flag.Parse()
@@ -71,7 +72,7 @@ func main() {
 			log.Println(err)
 		}()
 	}
-	http.ListenAndServe(":http", nil)
+	http.ListenAndServe(*httpAddr, nil)
 }
 
 func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
