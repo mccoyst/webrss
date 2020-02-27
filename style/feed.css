@@ -63,7 +63,7 @@ a:visited {
 }
 
 .card-item {
-	list-style: inside '· ';
+	list-style: inside disc;
 	font-size: 100%;
 	margin-top: 0.1em;
 }
