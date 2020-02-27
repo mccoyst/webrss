@@ -332,13 +332,13 @@ var listPageTemplate = `<!DOCTYPE html>
 	<ul>
 {{$prev := (index . 0).When}}
 {{range .}}
+{{if dayAfter $prev .When}}<hr>{{end}}
 	<li>
 		<h1><a href="{{.URL}}">{{.Title}}</a></h1>
 		<p class="details"><time datetime="{{.When.Format "2006-01-02"}}">{{.When.Format "Mon 02/01/2006"}}</time>, <a href="{{.FeedURL}}">{{.FeedName}}</a>
 
 		</p>
 	</li>
-{{if dayAfter $prev .When}}<hr>{{end}}
 {{$prev = .When}}
 {{end}}
 	</ul>
