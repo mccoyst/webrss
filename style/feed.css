@@ -26,6 +26,11 @@ li {
 	list-style: none;
 }
 
+hr {
+	border: none;
+	border-top: thin solid;
+}
+
 a:link {
 	font-size: 100%;
 	color: inherit;

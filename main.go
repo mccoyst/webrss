@@ -305,7 +305,15 @@ func filterEntries(feeds []Entry, begin time.Time) []Entry {
 	return filtered
 }
 
-var listPage = template.Must(template.New("listing").Parse(listPageTemplate))
+var tfuncs = template.FuncMap{
+	"dayAfter": func(a, b time.Time)bool{
+		a = time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, time.Local)
+		b = time.Date(b.Year(), b.Month(), b.Day(), 0, 0, 0, 0, time.Local)
+		return a.After(b)
+	},
+}
+
+var listPage = template.Must(template.New("listing").Funcs(tfuncs).Parse(listPageTemplate))
 
 var listPageTemplate = `<!DOCTYPE html>
 <html>
@@ -322,11 +330,16 @@ var listPageTemplate = `<!DOCTYPE html>
 <body>
 {{if .}}
 	<ul>
+{{$prev := (index . 0).When}}
 {{range .}}
 	<li>
 		<h1><a href="{{.URL}}">{{.Title}}</a></h1>
-		<p class="details"><time datetime="{{.When.Format "2006-01-02"}}">{{.When.Format "Mon 02/01/2006"}}</time>, <a href="{{.FeedURL}}">{{.FeedName}}</a></p>
+		<p class="details"><time datetime="{{.When.Format "2006-01-02"}}">{{.When.Format "Mon 02/01/2006"}}</time>, <a href="{{.FeedURL}}">{{.FeedName}}</a>
+
+		</p>
 	</li>
+{{if dayAfter $prev .When}}<hr>{{end}}
+{{$prev = .When}}
 {{end}}
 	</ul>
 {{else}}
