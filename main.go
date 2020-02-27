@@ -59,6 +59,9 @@ func main() {
 	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
 		listFeeds(w, time.Time{}, toShow)
 	})
+	http.HandleFunc("/day", func(w http.ResponseWriter, r *http.Request) {
+		showDaily(w, toShow)
+	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
 			listFeeds(w, time.Now().AddDate(0, 0, -1), toShow)
@@ -79,6 +82,33 @@ func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
 	feeds := <-fc
 	entries := filterEntries(feeds, since)
 	listPage.Execute(w, entries)
+}
+
+func showDaily(w io.Writer, fc <-chan []Entry) {
+	feeds := <-fc
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	entries := filterEntries(feeds, today)
+
+	//TODO: this is just undoing filterEntries()'s work…
+	sites := map[string][]Entry{}
+	for i := range entries {
+		sites[entries[i].FeedName] = append(sites[entries[i].FeedName], entries[i])
+	}
+
+	var d Daily
+	for s := range sites {
+		if len(sites[s]) == 1 {
+			d.Singles = append(d.Singles, sites[s][0])
+		} else {
+			d.Sites = append(d.Sites, Site{s, sites[s]})
+		}
+	}
+	sort.Slice(d.Sites, func(i, j int) bool {
+		return len(d.Sites[i].Entries) > len(d.Sites[j].Entries)
+	})
+
+	dailyPage.Execute(w, d)
 }
 
 func feedCache(toSave <-chan []Entry, toShow chan<- []Entry) {
@@ -314,6 +344,7 @@ var tfuncs = template.FuncMap{
 }
 
 var listPage = template.Must(template.New("listing").Funcs(tfuncs).Parse(listPageTemplate))
+var dailyPage = template.Must(template.New("daily").Funcs(tfuncs).Parse(dailyPageTemplate))
 
 var listPageTemplate = `<!DOCTYPE html>
 <html>
@@ -344,6 +375,57 @@ var listPageTemplate = `<!DOCTYPE html>
 	</ul>
 {{else}}
 	<p>Nothing to see, yet. ⏳</p>
+{{end}}
+</body>
+</html>
+`
+
+type Daily struct {
+	Sites []Site
+	Singles []Entry
+}
+
+type Site struct {
+	Name string
+	Entries []Entry
+}
+
+var dailyPageTemplate = `<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link rel="icon" href="style/favicon.png">
+	<link rel="stylesheet" href="style/feed.css">
+
+	<title>WEBRSS Today</title>
+</head>
+
+<body>
+{{if .Sites}}
+	<ul>
+{{range .Sites}}
+		<li class="card">
+			<h1>{{.Name}}</h1>
+			<ul>
+{{range .Entries}}
+				<li class="card-item"><a href="{{.URL}}">{{.Title}}</a></li>
+{{end}}
+			</ul>
+		</li>
+{{end}}
+	</ul>
+{{end}}
+{{if .Singles}}
+		<div class="card">
+			<h1>🆒 Singles 🆒</h1>
+			<ul>
+{{range .Singles}}
+				<li class="card-item"><a href="{{.URL}}">{{.Title}}</a><span class="details"> (<a href="{{.FeedURL}}">{{.FeedName}}</a>)</span></li>
+{{end}}
+			</ul>
+		</div>
 {{end}}
 </body>
 </html>

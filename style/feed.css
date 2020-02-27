@@ -20,6 +20,7 @@ h1 {
 
 ul {
 	padding: 0;
+	margin: 0;
 }
 
 li {
@@ -47,4 +48,21 @@ a:visited {
 	margin: 0;
 	font-size: 10pt;
 	color: #767676;
+}
+
+.card {
+	background-color: rgb(255,255,240);
+	border: 1px solid black;
+	border-left: 2px solid black;
+	border-bottom: 2px solid black;
+	padding-bottom: 0.5em;
+	margin-bottom: 0.5em;
+	padding-left: 1em;
+	list-style: none;
+}
+
+.card-item {
+	list-style: inside '· ';
+	font-size: 100%;
+	margin-top: 0.1em;
 }
