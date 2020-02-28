@@ -89,6 +89,11 @@ func showDaily(w io.Writer, fc <-chan []Entry) {
 	now := time.Now()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 	entries := filterEntries(feeds, today)
+	if len(entries) == 0 {
+		now = now.AddDate(0, 0, -1)
+		today = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+		entries = filterEntries(feeds, today)
+	}
 
 	//TODO: this is just undoing filterEntries()'s work…
 	sites := map[string][]Entry{}
