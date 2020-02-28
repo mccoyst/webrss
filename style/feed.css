@@ -7,8 +7,8 @@ body {
 	font-weight: 300;
 	max-width: 40em;
 	margin: auto;
-	padding-left: 1.25em;
-	padding-right: 1.25em;
+	padding-left: 0.25em;
+	padding-right: 0.25em;
 }
 
 h1 {
@@ -53,13 +53,12 @@ a:visited {
 .card {
 	background-color: rgb(255,255,240);
 	border: 1px solid black;
-	border-left: 2px solid black;
-	border-bottom: 2px solid black;
 	padding-bottom: 0.5em;
 	margin-bottom: 0.5em;
 	padding-left: 1em;
 	padding-right: 1em;
 	list-style: none;
+	box-shadow: -2px 2px darkgrey;
 }
 
 .card-item {
