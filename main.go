@@ -423,7 +423,7 @@ var dailyPageTemplate = `<!DOCTYPE html>
 {{end}}
 {{if .Singles}}
 		<div class="card">
-			<h1>🆒 Singles 🆒</h1>
+			<h1>★ Singles ★</h1>
 			<ul>
 {{range .Singles}}
 				<li class="card-item"><a href="{{.URL}}">{{.Title}}</a><span class="details"> (<a href="{{.FeedURL}}">{{.FeedName}}</a>)</span></li>
