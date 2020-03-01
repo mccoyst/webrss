@@ -64,7 +64,7 @@ func main() {
 	})
 	http.HandleFunc("/yesterday", func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
-		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+		t = time.Date(t.Year(), t.Month(), t.Day()-1, 0, 0, 0, 0, time.UTC)
 		showDaily(w, t, toShow)
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -85,20 +85,14 @@ func main() {
 
 func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
 	feeds := <-fc
-	entries := filterEntries(feeds, since)
+	entries := filterEntries(feeds, since, time.Time{})
 	listPage.Execute(w, entries)
 }
 
 func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
 	feeds := <-fc
-	now := t
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	entries := filterEntries(feeds, today)
-	if len(entries) == 0 {
-		now = now.AddDate(0, 0, -1)
-		today = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-		entries = filterEntries(feeds, today)
-	}
+	day := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
+	entries := filterEntries(feeds, day, day.AddDate(0, 0, 1))
 
 	//TODO: this is just undoing filterEntries()'s work…
 	sites := map[string][]Entry{}
@@ -332,10 +326,10 @@ type Entry struct {
 	When     time.Time
 }
 
-func filterEntries(feeds []Entry, begin time.Time) []Entry {
+func filterEntries(feeds []Entry, begin, end time.Time) []Entry {
 	var filtered []Entry
 	for _, i := range feeds {
-		if i.When.After(begin) {
+		if i.When.After(begin) && (end.IsZero() || end.After(i.When)) {
 			filtered = append(filtered, i)
 		}
 	}
