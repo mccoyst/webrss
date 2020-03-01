@@ -64,7 +64,7 @@ func main() {
 	})
 	http.HandleFunc("/yesterday", func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now()
-		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 		showDaily(w, t, toShow)
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -92,11 +92,11 @@ func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
 func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
 	feeds := <-fc
 	now := t
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	entries := filterEntries(feeds, today)
 	if len(entries) == 0 {
 		now = now.AddDate(0, 0, -1)
-		today = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+		today = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 		entries = filterEntries(feeds, today)
 	}
 
@@ -347,8 +347,8 @@ func filterEntries(feeds []Entry, begin time.Time) []Entry {
 
 var tfuncs = template.FuncMap{
 	"dayAfter": func(a, b time.Time)bool{
-		a = time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, time.Local)
-		b = time.Date(b.Year(), b.Month(), b.Day(), 0, 0, 0, 0, time.Local)
+		a = time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, time.UTC)
+		b = time.Date(b.Year(), b.Month(), b.Day(), 0, 0, 0, 0, time.UTC)
 		return a.After(b)
 	},
 }
