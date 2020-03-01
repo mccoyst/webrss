@@ -60,7 +60,12 @@ func main() {
 		listFeeds(w, time.Time{}, toShow)
 	})
 	http.HandleFunc("/day", func(w http.ResponseWriter, r *http.Request) {
-		showDaily(w, toShow)
+		showDaily(w, time.Now(), toShow)
+	})
+	http.HandleFunc("/yesterday", func(w http.ResponseWriter, r *http.Request) {
+		t := time.Now()
+		t = time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.Local)
+		showDaily(w, t, toShow)
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
@@ -84,9 +89,9 @@ func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
 	listPage.Execute(w, entries)
 }
 
-func showDaily(w io.Writer, fc <-chan []Entry) {
+func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
 	feeds := <-fc
-	now := time.Now()
+	now := t
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 	entries := filterEntries(feeds, today)
 	if len(entries) == 0 {
