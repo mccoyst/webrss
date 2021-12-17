@@ -85,7 +85,6 @@ func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
 	day := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 	entries := filterEntries(feeds, day, day.AddDate(0, 0, 1))
 
-	//TODO: this is just undoing filterEntries()'s work…
 	sites := map[string][]Entry{}
 	for i := range entries {
 		sites[entries[i].FeedName] = append(sites[entries[i].FeedName], entries[i])
@@ -100,7 +99,7 @@ func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
 		}
 	}
 	sort.Slice(d.Sites, func(i, j int) bool {
-		return len(d.Sites[i].Entries) > len(d.Sites[j].Entries)
+		return len(d.Sites[i].Name) > len(d.Sites[j].Name)
 	})
 
 	dailyPage.Execute(w, d)
