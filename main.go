@@ -1,4 +1,4 @@
-// © 2019 Steve McCoy. Licensed under the MIT License.
+// © 2021 Steve McCoy. Licensed under the MIT License.
 
 package main
 
@@ -56,9 +56,6 @@ func main() {
 	go fetchFeeds(toSave, urls)
 
 	http.Handle("/style/", http.StripPrefix("/style/", http.FileServer(http.Dir("style/"))))
-	http.HandleFunc("/all", func(w http.ResponseWriter, r *http.Request) {
-		listFeeds(w, time.Time{}, toShow)
-	})
 	http.HandleFunc("/day", func(w http.ResponseWriter, r *http.Request) {
 		showDaily(w, time.Now(), toShow)
 	})
@@ -69,7 +66,7 @@ func main() {
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-			listFeeds(w, time.Now().AddDate(0, 0, -1), toShow)
+			showDaily(w, time.Now(), toShow)
 		} else {
 			http.NotFound(w, r)
 		}
@@ -81,12 +78,6 @@ func main() {
 		}()
 	}
 	http.ListenAndServe(*httpAddr, nil)
-}
-
-func listFeeds(w io.Writer, since time.Time, fc <-chan []Entry) {
-	feeds := <-fc
-	entries := filterEntries(feeds, since, time.Time{})
-	listPage.Execute(w, entries)
 }
 
 func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
@@ -339,50 +330,7 @@ func filterEntries(feeds []Entry, begin, end time.Time) []Entry {
 	return filtered
 }
 
-var tfuncs = template.FuncMap{
-	"dayAfter": func(a, b time.Time)bool{
-		a = time.Date(a.Year(), a.Month(), a.Day(), 0, 0, 0, 0, time.UTC)
-		b = time.Date(b.Year(), b.Month(), b.Day(), 0, 0, 0, 0, time.UTC)
-		return a.After(b)
-	},
-}
-
-var listPage = template.Must(template.New("listing").Funcs(tfuncs).Parse(listPageTemplate))
-var dailyPage = template.Must(template.New("daily").Funcs(tfuncs).Parse(dailyPageTemplate))
-
-var listPageTemplate = `<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-
-	<link rel="icon" href="style/favicon.png">
-	<link rel="stylesheet" href="style/feed.css">
-
-	<title>WEBRSS</title>
-</head>
-
-<body>
-{{if .}}
-	<ul>
-{{$prev := (index . 0).When}}
-{{range .}}
-{{if dayAfter $prev .When}}<hr>{{end}}
-	<li>
-		<h1><a href="{{.URL}}">{{.Title}}</a></h1>
-		<p class="details"><time datetime="{{.When.Format "2006-01-02"}}">{{.When.Format "Mon 02/01/2006"}}</time>, <a href="{{.FeedURL}}">{{.FeedName}}</a>
-
-		</p>
-	</li>
-{{$prev = .When}}
-{{end}}
-	</ul>
-{{else}}
-	<p>Nothing to see, yet. ⏳</p>
-{{end}}
-</body>
-</html>
-`
+var dailyPage = template.Must(template.New("daily").Parse(dailyPageTemplate))
 
 type Daily struct {
 	Sites []Site
