@@ -1,3 +1,3 @@
-module github.com/mccoyst/webrss
+module mccoy.space/g/webrss
 
-go 1.12
+go 1.18
