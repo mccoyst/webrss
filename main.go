@@ -354,6 +354,16 @@ var dailyPageTemplate = `<!DOCTYPE html>
 </head>
 
 <body>
+{{if .Singles}}
+		<div class="card">
+			<h1>★ Singles ★</h1>
+			<ul>
+{{range .Singles}}
+				<li class="card-item"><a href="{{.URL}}">{{.Title}}</a><span class="details"> (<a href="{{.FeedURL}}">{{.FeedName}}</a>)</span></li>
+{{end}}
+			</ul>
+		</div>
+{{end}}
 {{if .Sites}}
 	<ul>
 {{range .Sites}}
@@ -367,16 +377,6 @@ var dailyPageTemplate = `<!DOCTYPE html>
 		</li>
 {{end}}
 	</ul>
-{{end}}
-{{if .Singles}}
-		<div class="card">
-			<h1>★ Singles ★</h1>
-			<ul>
-{{range .Singles}}
-				<li class="card-item"><a href="{{.URL}}">{{.Title}}</a><span class="details"> (<a href="{{.FeedURL}}">{{.FeedName}}</a>)</span></li>
-{{end}}
-			</ul>
-		</div>
 {{end}}
 </body>
 </html>
