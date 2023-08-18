@@ -99,7 +99,7 @@ func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
 		}
 	}
 	sort.Slice(d.Sites, func(i, j int) bool {
-		return len(d.Sites[i].Name) > len(d.Sites[j].Name)
+		return d.Sites[i].Name < d.Sites[j].Name
 	})
 
 	dailyPage.Execute(w, d)
