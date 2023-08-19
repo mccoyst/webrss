@@ -57,7 +57,7 @@ func main() {
 
 	http.Handle("/style/", http.StripPrefix("/style/", http.FileServer(http.Dir("style/"))))
 	http.HandleFunc("/day", func(w http.ResponseWriter, r *http.Request) {
-		showDaily(w, time.Now().UTC().AddDay(0, 0, -1), toShow)
+		showDaily(w, time.Now().UTC().AddDate(0, 0, -1), toShow)
 	})
 	http.HandleFunc("/yesterday", func(w http.ResponseWriter, r *http.Request) {
 		t := time.Now().UTC().AddDate(0, 0, -2)
@@ -65,7 +65,7 @@ func main() {
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-			showDaily(w, time.Now().UTC().AddDay(0, 0, -1), toShow)
+			showDaily(w, time.Now().UTC().AddDate(0, 0, -1), toShow)
 		} else {
 			http.NotFound(w, r)
 		}
