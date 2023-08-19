@@ -10,6 +10,7 @@ import (
 	"flag"
 	"html/template"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"net/url"
@@ -41,6 +42,15 @@ func main() {
 	if *feeds != "" {
 		f, err := os.Open(*feeds)
 		maybeDie(err)
+
+		finfo, err := f.Stat()
+		maybeDie(err)
+		cinfo, err := os.Stat(*cache)
+		if !errors.Is(err, fs.ErrNotExist) {
+			maybeDie(err)
+		} else if finfo.ModTime().After(cinfo.ModTime()) {
+			os.Remove(*cache)
+		}
 
 		in := bufio.NewScanner(f)
 		for in.Scan() {
