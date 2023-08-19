@@ -48,7 +48,7 @@ func main() {
 		cinfo, err := os.Stat(*cache)
 		if !errors.Is(err, fs.ErrNotExist) {
 			maybeDie(err)
-		} else if finfo.ModTime().After(cinfo.ModTime()) {
+		} else if cinfo != nil && finfo.ModTime().After(cinfo.ModTime()) {
 			os.Remove(*cache)
 		}
 
