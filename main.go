@@ -57,16 +57,15 @@ func main() {
 
 	http.Handle("/style/", http.StripPrefix("/style/", http.FileServer(http.Dir("style/"))))
 	http.HandleFunc("/day", func(w http.ResponseWriter, r *http.Request) {
-		showDaily(w, time.Now(), toShow)
+		showDaily(w, time.Now().UTC(), toShow)
 	})
 	http.HandleFunc("/yesterday", func(w http.ResponseWriter, r *http.Request) {
-		t := time.Now()
-		t = time.Date(t.Year(), t.Month(), t.Day()-1, 0, 0, 0, 0, time.UTC)
+		t := time.Now().UTC().AddDate(0, 0, -1)
 		showDaily(w, t, toShow)
 	})
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" || r.URL.Path == "/index.html" {
-			showDaily(w, time.Now(), toShow)
+			showDaily(w, time.Now().UTC(), toShow)
 		} else {
 			http.NotFound(w, r)
 		}
@@ -80,9 +79,8 @@ func main() {
 	http.ListenAndServe(*httpAddr, nil)
 }
 
-func showDaily(w io.Writer, t time.Time, fc <-chan []Entry) {
+func showDaily(w io.Writer, day time.Time, fc <-chan []Entry) {
 	feeds := <-fc
-	day := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC)
 	entries := filterEntries(feeds, day, day.AddDate(0, 0, 1))
 
 	sites := map[string][]Entry{}
