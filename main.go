@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"cmp"
 	"encoding/gob"
 	"encoding/xml"
 	"errors"
@@ -15,7 +16,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sort"
+	"slices"
 	"time"
 )
 
@@ -106,8 +107,8 @@ func showDaily(w io.Writer, day time.Time, fc <-chan []Entry) {
 			d.Sites = append(d.Sites, Site{s, sites[s]})
 		}
 	}
-	sort.Slice(d.Sites, func(i, j int) bool {
-		return d.Sites[i].Name < d.Sites[j].Name
+	slices.SortFunc(d.Sites, func(a, b Site) int {
+		return cmp.Compare(a.Name, b.Name)
 	})
 
 	dailyPage.Execute(w, d)
@@ -331,8 +332,8 @@ func filterEntries(feeds []Entry, begin, end time.Time) []Entry {
 			filtered = append(filtered, i)
 		}
 	}
-	sort.Slice(filtered, func(i, j int) bool {
-		return filtered[i].When.After(filtered[j].When)
+	slices.SortFunc(filtered, func(a, b Entry) int {
+		return b.When.Compare(a.When)
 	})
 	return filtered
 }
