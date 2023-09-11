@@ -67,3 +67,16 @@ a:visited {
 	margin-top: 0.1em;
 	margin-left: 1em;
 }
+
+@media (prefers-color-scheme: dark) {
+body {
+	background-color: black;
+	color: rgb(255,255,240);
+}
+
+.card {
+	background-color: #242424;
+	border: 1px solid #767676;
+	box-shadow: 2px 2px darkorchid;
+}
+}
